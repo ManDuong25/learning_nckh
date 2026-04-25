@@ -1,0 +1,37 @@
+# ViT5 vs PhoBERT ABSA Benchmark — Requirements
+
+# Core ML
+torch>=2.0.0
+transformers>=4.30.0
+datasets>=2.12.0
+accelerate>=0.20.0
+sentencepiece>=0.1.99
+
+# Vietnamese Models
+protobuf>=3.20.0
+
+# Evaluation
+rouge-score>=0.1.2
+seqeval>=1.2.2
+scikit-learn>=1.2.0
+
+# Utilities
+huggingface_hub>=0.14.0
+numpy>=1.24.0
+pandas>=2.0.0
+tqdm>=4.65.0
+
+# Optional (for faster training)
+ninja>=1.11.0  # for flash-attn if available
+
+# For ONNX export (deployment)
+onnx>=1.14.0
+onnxruntime>=1.14.0
+
+# For visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Jupyter (if running notebooks)
+jupyter>=1.0.0
+ipywidgets>=8.0.0

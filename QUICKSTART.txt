@@ -1,0 +1,243 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                         ViT5 QUICKSTART                                  ║
+║           Vietnamese Text-to-Text Transfer Transformer                   ║
+║                      Bắt Đầu Trong 5 Phút                               ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+📦 BỘ NÀI GỒM 9 FILES:
+  1. README.md                     → Tổng hợp toàn bộ package
+  2. VIT5_OVERVIEW.md              → Giới thiệu chi tiết
+  3. VIT5_VS_QWEN_COMPARISON.md    → So sánh ViT5 vs Qwen
+  4. ALL_VIT5_VARIANTS.md          → Catalog tất cả variants
+  5. USAGE_GUIDE.md                → Hướng dẫn sử dụng chi tiết
+  6. CHEAT_SHEET.txt               → Quick reference
+  7. debug-vit5-model.py           → Debug script chi tiết
+  8. quick-demo-vit5.py            → Demo nhanh
+  9. list-all-vit5-models.py       → List variants từ HF Hub
+
+═══════════════════════════════════════════════════════════════════════════
+
+🚀 BƯỚC 1: INSTALL (30 GIÂY)
+───────────────────────────────────────────────────────────────────────────
+pip install torch transformers sentencepiece
+
+═══════════════════════════════════════════════════════════════════════════
+
+🚀 BƯỚC 2: CHẠY DEMO NHANH (2 PHÚT)
+───────────────────────────────────────────────────────────────────────────
+
+Option A: Python script
+  $ python quick-demo-vit5.py
+
+  Output expected:
+    Input:  "tóm tắt: Trí tuệ nhân tạo..."
+    Output: "AI là lĩnh vực nghiên cứu..."
+
+Option B: Python interactive
+  $ python
+  >>> from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+  >>> tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")
+  >>> model = AutoModelForSeq2SeqLM.from_pretrained("VietAI/vit5-base")
+  >>> text = "tóm tắt: Việt AI là tổ chức phi lợi nhuận. </s>"
+  >>> inputs = tokenizer(text, return_tensors="pt")
+  >>> outputs = model.generate(**inputs, max_length=50)
+  >>> print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+  "Việt AI là tổ chức phi lợi nhuận..."
+
+═══════════════════════════════════════════════════════════════════════════
+
+🚀 BƯỚC 3: DEBUG CHI TIẾT (10 PHÚT)
+───────────────────────────────────────────────────────────────────────────
+  $ python debug-vit5-model.py
+
+  Script sẽ in ra:
+  ✓ Environment (Python, PyTorch, CUDA)
+  ✓ Model config (layers, heads, params của base & large)
+  ✓ Special tokens & vocabulary
+  ✓ Tokenization examples
+  ✓ Architecture visualization
+  ✓ Forward pass demo
+  ✓ Generation demo (summarization, translation, QA)
+  ✓ Base vs Large comparison (speed, memory, quality)
+
+═══════════════════════════════════════════════════════════════════════════
+
+📚 ĐỌC TÀI LIỆU THEO THỨ TỰ NÀY:
+───────────────────────────────────────────────────────────────────────────
+
+Người mới bắt đầu:
+  1. README.md                 (5 phút) → Biết có gì trong package
+  2. QUICKSTART.txt            (2 phút) → Bạn đang đọc file này
+  3. quick-demo-vit5.py        (5 phút) → Chạy demo
+  4. VIT5_OVERVIEW.md          (15 phút) → Hiểu kiến trúc
+
+Người muốn sâu:
+  5. debug-vit5-model.py       (20 phút) → Run & phân tích output
+  6. VIT5_VS_QWEN_COMPARISON.md(10 phút) → So sánh với mô hình khác
+  7. ALL_VIT5_VARIANTS.md      (10 phút) → Chọn model phù hợp
+
+Người đi sản xuất:
+  8. USAGE_GUIDE.md            (15 phút) → Best practices
+  9. CHEAT_SHEET.txt           (reference nhanh)
+
+═══════════════════════════════════════════════════════════════════════════
+
+🎯 TẠI SAO CHỌN VIT5?
+
+✓ State-of-the-art cho tiếng Việt
+✓ Mở (MIT license)
+✓ Dễ sử dụng với HuggingFace
+✓ Nhiều finetuned variants có sẵn
+✓ nhẹ (220M-770M params) → Chạy trên CPU/GPU phổ thông
+✓ Tốt cho: dịch thuật, tóm tắt, hỏi đáp
+
+═══════════════════════════════════════════════════════════════════════════
+
+🆚 VIT5 vs QWEN - NÊN DÙNG CÁI NÀO?
+
+Task bạn cần                          Khuyến nghị
+────────────────────────────────────────────────────────────
+Dịch Anh-Việt, Việt-Anh              → ViT5 (envit5-base)
+Tóm tắt văn bản                      → ViT5 (vietnews-summarization)
+Hỏi đáp từ ngữ cảnh                  → ViT5 (fine-tune NER)
+Chatbot hội thoại                    → Qwen
+Sinh văn bản sáng tạo                → Qwen
+Code generation                      → Qwen
+Multitask (text + code)              → Qwen
+Task có input-output rõ ràng         → ViT5
+Task mở, cần sáng tạo                → Qwen
+
+═══════════════════════════════════════════════════════════════════════════
+
+📊 MODEL SELECTION TABLE
+
+Task                           Model                         Params   VRAM
+──────────────────────────────────────────────────────────────────────────
+Summarization (high quality)   vit5-large-vietnews-sum       770M    ~6GB
+Summarization (fast)           vit5-base-vietnews-sum        220M    ~2GB
+Translation En↔Vi              envit5-base                   220M    ~2GB
+General purpose               vit5-base                     220M    ~2GB
+Best quality overall          vit5-large                    770M    ~6GB
+
+═══════════════════════════════════════════════════════════════════════════
+
+⚡ PROMPT TEMPLATES (NHỚ THÊM PREFIX!)
+
+Task              Prompt Format
+──────────────────────────────────────────────────────────────────────────
+Summarization     "tóm tắt: {text} </s>"
+Translation Vi→En "dịch sang tiếng Anh: {text} </s>"
+Translation En→Vi "dịch sang tiếng Việt: {text} </s>"
+Question Answer   "câu hỏi: {question} câu trả lời:"
+NER               "nhận diện thực thể: {text} </s>"
+
+═══════════════════════════════════════════════════════════════════════════
+
+🔧 COMMON COMMANDS
+
+# Check all ViT5 variants on HuggingFace
+python list-all-vit5-models.py
+
+# Run quick demo
+python quick-demo-vit5.py
+
+# Deep debug (infer architecture details)
+python debug-vit5-model.py
+
+# List only summarization models
+# (see ALL_VIT5_VARIANTS.md section 2)
+
+═══════════════════════════════════════════════════════════════════════════
+
+💾 MEMORY REQUIREMENTS
+
+Model        FP32    FP16    8-bit   Recommended GPU
+──────────────────────────────────────────────────────────────────────────
+vit5-base    0.88GB  0.44GB  0.3GB   Any GPU (GTX 1660+)
+vit5-large   3.08GB  1.54GB  0.9GB   RTX 3090/4090, A6000
+
+═══════════════════════════════════════════════════════════════════════════
+
+🐛 HAVE ISSUES?
+
+Problem: Out of memory
+→ Solution: Use FP16 or reduce batch size
+
+Problem: Output doesn't match task
+→ Solution: Add task prefix (tóm tắt:, dịch:, etc.)
+
+Problem: Output too short
+→ Solution: length_penalty=2.0, min_length=30
+
+Problem: Slow inference
+→ Solution: num_beams=1 (greedy), use FP16, batch size >1
+
+═══════════════════════════════════════════════════════════════════════════
+
+📖 MORE RESOURCES
+
+Official:
+  GitHub:  https://github.com/vietai/ViT5
+  Paper:   https://arxiv.org/abs/2205.06457
+  Models:  https://huggingface.co/VietAI
+
+Tutorials:
+  Finetune: https://github.com/vietai/ViT5/tree/main/examples
+
+Community:
+  VietAI: https://vietai.org/
+  Discord: Search "VietAI Discord"
+
+═══════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST TRƯỚC KHI PRODUCTION
+
+[ ] Đã test trên >=100 mẫu thực tế
+[ ] Đã chọn đúng model cho task
+[ ] Generation parameters đã optimize
+[ ] Input có task prefix
+[ ] Output được post-process (remove special tokens)
+[ ] Batch size phù hợp với VRAM
+[ ] Error handling (long inputs, empty inputs)
+[ ] Logging input/output
+[ ] Rate limiting (nếu là API)
+[ ] Monitoring & alerts setup
+
+═══════════════════════════════════════════════════════════════════════════
+
+🎓 LEARNING PATH (5 DAYS)
+
+Day 1: Read README + Run quick-demo-vit5.py
+Day 2: Run debug-vit5-model.py, understand architecture
+Day 3: Read VIT5_VS_QWEN.md, know when to use what
+Day 4: Fine-tune vit5-base on your dataset
+Day 5: Deploy as API, optimize latency
+
+═══════════════════════════════════════════════════════════════════════════
+
+🎁 BONUS: ONE-LINER SUMMARY
+
+"ViT5 is to Vietnamese what T5 is to English — a unified text-to-text
+ framework that excels at translation, summarization, and question answering,
+ with specialized pretraining for Vietnamese morphology and syntax."
+
+═══════════════════════════════════════════════════════════════════════════
+
+🎉 BẮT ĐẦU NGAY!
+
+  $ python quick-demo-vit5.py
+
+Nếu bạn thấy kết quả ổn → ViT5 sẵn sàng cho production!
+
+═══════════════════════════════════════════════════════════════════════════
+
+📞 Cần trợ giúp?
+  • Xem ALL_VIT5_VARIANTS.md (catalog đầy đủ)
+  • Xem USAGE_GUIDE.md (patterns chi tiết)
+  • GitHub Issues: https://github.com/vietai/ViT5/issues
+
+═══════════════════════════════════════════════════════════════════════════
+
+Happy learning & coding! 🚀
+
+*Last updated: 2026-04-25*

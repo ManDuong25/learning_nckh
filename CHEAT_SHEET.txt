@@ -1,0 +1,223 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                        ViT5 CHEAT SHEET                                  ║
+║            Vietnamese Text-to-Text Transfer Transformer                  ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📋 MODEL VARIANTS                                                         │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Base  : vit5-base      | ~220M params | 12L encoder + 12L decoder       │
+│ Large : vit5-large     | ~770M params | 24L encoder + 24L decoder       │
+│                                                                           │
+│ Finetuned:                                                                 │
+│ • vit5-base-vietnews-summarization  → Tóm tắt báo                      │
+│ • vit5-large-vietnews-summarization → Tóm tắt báo (quality)            │
+│ • envit5-base                       → Dịch Anh-Việt                   │
+│ • envit5-translation                → Dịch chuyên biệt                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🎯 TASK PROMPT FORMATS                                                    │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Summarization:  "tóm tắt: {text} </s>"                                   │
+│ Translation Vi→En: "dịch sang tiếng Anh: {text} </s>"                   │
+│ Translation En→Vi: "dịch sang tiếng Việt: {text} </s>"                  │
+│ Question Answer:  "câu hỏi: {q} câu trả lời:"                           │
+│ NER:             "nhận diện thực thể: {text} </s>"                      │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ⚙️ CONFIG COMPARISON                                                      │
+├───────────────────────┬──────────────┬──────────────┬─────────────────────┤
+│ Parameter             │ ViT5-Base    │ ViT5-Large   │ Note               │
+├───────────────────────┼──────────────┼──────────────┼─────────────────────┤
+│ d_model (hidden)      │ 768          │ 1024         │ +33%               │
+│ Encoder layers        │ 12           │ 24           │ +100%              │
+│ Decoder layers        │ 12           │ 24           │ +100%              │
+│ Attention heads       │ 12           │ 16           │ +33%               │
+│ FFN dim              │ 3072         │ 2816         │ Slightly smaller  │
+│ Vocab size           │ 36,096       │ 36,096       │ SentencePiece      │
+│ Total params         │ ~220M        │ ~770M        │ 3.5x larger       │
+│ Memory (FP16)        │ ~0.44GB      │ ~1.54GB      │ 3.5x              │
+│ Inference speed      │ ~150 tok/s   │ ~50 tok/s    │ Slower but better │
+└───────────────────────┴──────────────┴──────────────┴─────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🚀 QUICK CODE                                                            │
+├──────────────────────────────────────────────────────────────────────────┤
+│ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM           │
+│ import torch                                                             │
+│                                                                           │
+│ tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")          │
+│ model = AutoModelForSeq2SeqLM.from_pretrained("VietAI/vit5-base")      │
+│ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  │
+│ model.to(device)                                                         │
+│                                                                           │
+│ text = "tóm tắt: Đây là văn bản cần tóm tắt. </s>"                      │
+│ inputs = tokenizer(text, return_tensors="pt").to(device)               │
+│ outputs = model.generate(**inputs, max_length=50)                       │
+│ result = tokenizer.decode(outputs[0], skip_special_tokens=True)        │
+│ print(result)                                                            │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ⚡ GENERATION PARAMETERS                                                 │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Quality:   num_beams=4-8, length_penalty=2.0, early_stopping=True      │
+│ Speed:     num_beams=1, do_sample=True                                  │
+│ Diversity: temperature=0.8, top_k=50, top_p=0.95                       │
+│ Length:    min_length=20, max_length=100-200                           │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🆚 ENCODER-DECODER vs DECODER-ONLY (ViT5 vs Qwen)                       │
+├──────────────────────────────────────────────────────────────────────────┤
+│ ViT5: Encoder-Decoder → Input → Encoder → Cross-Attn → Decoder → Output│
+│      Best for: Translation, Summarization, QA                           │
+│      Needs: Task prefix ("tóm tắt:", "dịch:")                          │
+│                                                                           │
+│ Qwen: Decoder-only → Causal LM → Token by token                         │
+│      Best for: Chat, Creative writing, Code                              │
+│      Needs: Chat template (System/User/Assistant)                       │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📊 PERFORMANCE (VietNews Summarization)                                 │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Model              ROUGE-1  ROUGE-2  ROUGE-L   Memory  Speed              │
+│ ViT5-large         43.38     21.56     39.54    ~6GB    ~50 tok/s       │
+│ ViT5-base          42.15     20.84     38.62    ~2GB    ~150 tok/s      │
+│ mBART-large        41.52     20.01     37.96    ~3GB    ~80 tok/s       │
+│ T5-base            40.23     19.12     36.85    ~2GB    ~150 tok/s      │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 💾 MEMORY REQUIREMENTS                                                   │
+├──────────────────────────────────────────────────────────────────────────┤
+│ vit5-base  FP32:  ~0.88GB  |  FP16:  ~0.44GB  |  8-bit:  ~0.3GB      │
+│ vit5-large FP32:  ~3.08GB  |  FP16:  ~1.54GB  |  8-bit:  ~0.9GB      │
+│                                                                           │
+│ Recommended GPU:                                                          │
+│ • Base  → Any GPU (GTX 1660, RTX 3060 trở lên)                          │
+│ • Large → RTX 3090/4090, A6000, or better                                │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🔧 TROUBLESHOOTING QUICK FIXES                                           │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Problem: "CUDA out of memory"                                            │
+│ Fix: Use FP16: torch_dtype=torch.float16                                 │
+│      Reduce batch_size or beams                                          │
+│                                                                           │
+│ Problem: Output gibberish                                                 │
+│ Fix: Add task prefix: "tóm tắt: " + text + " </s>"                      │
+│      Set proper max_length                                               │
+│                                                                           │
+│ Problem: Output too short                                                │
+│ Fix: length_penalty=2.0, min_length=30                                  │
+│                                                                           │
+│ Problem: Model not loading                                                │
+│ Fix: pip install --upgrade transformers sentencepiece                    │
+│      Clear cache: rm -rf ~/.cache/huggingface                           │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📈 FINE-TUNING HYPERPARAMETERS (RECOMMENDED)                             │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Learning rate:       3e-4 (base), 1e-4 (large)                           │
+│ Batch size:          8 (base), 4 (large) on 16GB GPU                     │
+│ Warmup steps:        1000                                                 │
+│ Train epochs:        3-5                                                  │
+│ Weight decay:        0.01                                                 │
+│ Gradient clipping:   1.0                                                  │
+│                                                                           │
+│ Optimizer: AdamW with linear scheduler                                   │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🎯 WHEN TO USE WHICH MODEL?                                              │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Use vit5-base if:     • Quick prototyping                                │
+│                       • Limited GPU memory                                │
+│                       • Need fast inference                               │
+│                       • General-purpose tasks                             │
+│                                                                           │
+│ Use vit5-large if:    • Maximum quality needed                           │
+│                       • Long documents                                    │
+│                       • Have powerful GPU                                 │
+│                       • Production with high volume                       │
+│                                                                           │
+│ Use finetuned if:     • Specific task (summarization/translation)        │
+│                       • Want best-in-class performance                    │
+│                       • Don't want to fine-tune yourself                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📚 VOCABULARY                                                             │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Tokenizer: SentencePiece (subword)                                        │
+│ Vocab size: 36,096 tokens                                                │
+│ Special tokens: <pad>, <unk>, <s>, </s>, <decoder_start>                │
+│ Handling: Good with diacritics (dấu tiếng Việt)                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🏆 BENCHMARKS (ROUGE-1)                                                  │
+├──────────────────────────────────────────────────────────────────────────┤
+│ vit5-large (vietnews)   : 43.38  ← Best Vietnamese summarizer           │
+│ vit5-base (vietnews)    : 42.15                                            │
+│ mBART-large             : 41.52  ← Best multilingual                      │
+│ T5-base                 : 40.23                                            │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📖 CITATION                                                               │
+├──────────────────────────────────────────────────────────────────────────┤
+│ @inproceedings{phan-etal-2022-vit5,                                     │
+│   title="{ViT5}: Pretrained Text-to-Text Transformer for Vietnamese",   │
+│   author="Phan, Long and Tran, Hieu and Nguyen, Hieu and Trinh, Trieu",│
+│   booktitle="NAACL-HLT 2022 Student Research Workshop",                 │
+│   year="2022",                                                           │
+│   pages="136--142"                                                       │
+│ }                                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 💡 KEY INSIGHTS                                                           │
+├──────────────────────────────────────────────────────────────────────────┤
+│ 1. ViT5 is encoder-decoder (like T5), NOT decoder-only (like GPT)       │
+│ 2. Always use task-specific prefix ("tóm tắt:", "dịch:")                │
+│ 3. Base model sufficient for most Vietnamese NLP tasks                  │
+│ 4. Large model gives +1-2 ROUGE points but 3.5x bigger                  │
+│ 5. Finetuned variants available for summarization & translation         │
+│ 6. Works great with diacritics (dấu) out-of-the-box                     │
+│ 7. Can run on CPU (slow) but recommend GPU for production               │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🎓 LEARNING PATH                                                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Day 1:  Read VIT5_OVERVIEW.md + Run quick-demo-vit5.py                  │
+│ Day 2:  Run debug-vit5-model.py (understand architecture)               │
+│ Day 3:  Read VIT5_VS_QWEN.md (know when to use what)                    │
+│ Day 4:  Fine-tune vit5-base on your dataset                             │
+│ Day 5:  Deploy as API, optimize latency                                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  Files in this pack:                                                     ║
+║  • debug-vit5-model.py    → Deep architecture analysis                   ║
+║  • quick-demo-vit5.py     → Quick test (5 min)                           ║
+║  • VIT5_OVERVIEW.md       → Full guide                                   ║
+║  • VIT5_VS_QWEN_COMPARISON.md → Encoder-Decoder vs Decoder-Only         ║
+║  • ALL_VIT5_VARIANTS.md   → All 87+ models catalog                      ║
+║  • USAGE_GUIDE.md         → Practical usage patterns                     ║
+║  • list-all-vit5-models.py→ Discover all variants on HF                 ║
+║  • THIS FILE (CHEAT SHEET) ← Quick reference                             ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+💡 TIP: Start with vit5-base → if quality OK, stick with it.
+           If need better quality → upgrade to vit5-large.
+           For specific task → use finetuned variant.
+
+Happy coding! 🚀
